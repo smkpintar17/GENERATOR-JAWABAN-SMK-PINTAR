@@ -1,0 +1,190 @@
+/* RESET & VARIABLE TEMA MERAH HITAM */
+:root {
+    --bg-main: #0a0a0a;
+    --bg-card: #141414;
+    --border-color: #2a2a2a;
+    --primary-red: #e50914;
+    --hover-red: #b20710;
+    --text-light: #f5f5f5;
+    --text-muted: #a0a0a0;
+    --gold-star: #ffc107;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-light);
+    min-height: 100vh;
+    padding: 20px 10px;
+}
+
+/* LAYOUT CONTAINER */
+.app-container {
+    max-width: 1250px;
+    margin: 0 auto;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.header h1 {
+    color: var(--primary-red);
+    font-size: 2rem;
+    letter-spacing: 1px;
+    text-shadow: 0 0 10px rgba(229, 9, 20, 0.4);
+}
+
+.header p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-top: 5px;
+}
+
+/* MAIN CONTENT (GRID RESPONSIVE) */
+.content-wrapper {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+@media (min-width: 900px) {
+    .content-wrapper {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.card h2 {
+    font-size: 1.25rem;
+    color: var(--primary-red);
+    margin-bottom: 15px;
+    border-bottom: 2px solid var(--primary-red);
+    padding-bottom: 8px;
+}
+
+/* FORM STYLES */
+.form-row {
+    display: flex;
+    gap: 12px;
+}
+
+.flex-1 { flex: 1; }
+.flex-2 { flex: 2; }
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 12px;
+}
+
+label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+}
+
+input[type="text"], input[type="number"] {
+    background-color: #1f1f1f;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 10px 12px;
+    color: var(--text-light);
+    font-size: 0.95rem;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+input[type="text"]:focus, input[type="number"]:focus {
+    border-color: var(--primary-red);
+    box-shadow: 0 0 8px rgba(229, 9, 20, 0.5);
+}
+
+/* GRID 2 KOLOM UNTUK JAWABAN */
+.answers-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+@media (min-width: 500px) {
+    .answers-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* BUTTONS */
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.1s;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.btn-primary {
+    background-color: #2a2a2a;
+    color: var(--text-light);
+    border: 1px solid var(--border-color);
+}
+
+.btn-primary:hover {
+    background-color: #3a3a3a;
+}
+
+.btn-secondary {
+    background-color: var(--primary-red);
+    color: #fff;
+}
+
+.btn-secondary:hover {
+    background-color: var(--hover-red);
+    box-shadow: 0 0 10px rgba(229, 9, 20, 0.4);
+}
+
+/* CANVAS PREVIEW STYLES */
+.canvas-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    background-color: #000;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+canvas {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
