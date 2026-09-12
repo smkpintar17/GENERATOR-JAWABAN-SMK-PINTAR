@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator Evaluasi & Graduasi Jawaban Siswa</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="header">
+            <h1>EVALUASI & GRADUASI JAWABAN SISWA</h1>
+            <p>Isi nama, jawaban, dan durasi pengerjaan untuk menghasilkan penilaian Grade & Bintang (JPG)</p>
+        </header>
+
+        <!-- CONTENT LAYOUT -->
+        <main class="content-wrapper">
+            
+            <!-- FORM INPUT -->
+            <section class="card form-section">
+                <h2>Form Data & Jawaban</h2>
+                <form id="quizForm">
+                    <div class="form-row">
+                        <div class="form-group flex-2">
+                            <label for="namaSiswa">Nama Peserta Didik</label>
+                            <input type="text" id="namaSiswa" placeholder="Masukkan nama lengkap..." required>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="waktuPengerjaan">Waktu Pengerjaan (Menit)</label>
+                            <input type="number" id="waktuPengerjaan" min="1" max="120" value="5" placeholder="Menit...">
+                        </div>
+                    </div>
+
+                    <div class="answers-grid">
+                        <!-- 10 Input Jawaban -->
+                        <div class="form-group"><label for="j1">1. Bahasa pemrograman web (HTML/CSS/JS)</label><input type="text" id="j1" class="ans-input" placeholder="Jawaban 1"></div>
+                        <div class="form-group"><label for="j2">2. Protokol transfer web aman (HTTP/HTTPS)</label><input type="text" id="j2" class="ans-input" placeholder="Jawaban 2"></div>
+                        <div class="form-group"><label for="j3">3. Database populer (MySQL/PostgreSQL)</label><input type="text" id="j3" class="ans-input" placeholder="Jawaban 3"></div>
+                        <div class="form-group"><label for="j4">4. Perintah simpan git (Commit/Push)</label><input type="text" id="j4" class="ans-input" placeholder="Jawaban 4"></div>
+                        <div class="form-group"><label for="j5">5. Styling tampilan web (CSS)</label><input type="text" id="j5" class="ans-input" placeholder="Jawaban 5"></div>
+                        <div class="form-group"><label for="j6">6. Layanan Cloud Google (GCP)</label><input type="text" id="j6" class="ans-input" placeholder="Jawaban 6"></div>
+                        <div class="form-group"><label for="j7">7. Format pertukaran data (JSON)</label><input type="text" id="j7" class="ans-input" placeholder="Jawaban 7"></div>
+                        <div class="form-group"><label for="j8">8. Framework CSS (Bootstrap/Tailwind)</label><input type="text" id="j8" class="ans-input" placeholder="Jawaban 8"></div>
+                        <div class="form-group"><label for="j9">9. Runtime JS backend (NodeJS)</label><input type="text" id="j9" class="ans-input" placeholder="Jawaban 9"></div>
+                        <div class="form-group"><label for="j10">10. Platform repositori kode (GitHub)</label><input type="text" id="j10" class="ans-input" placeholder="Jawaban 10"></div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button type="button" id="btnPreview" class="btn btn-primary">Hitung Grade & Preview</button>
+                        <button type="button" id="btnDownload" class="btn btn-secondary">Download (JPG)</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- CANVAS PREVIEW -->
+            <section class="card preview-section">
+                <h2>Preview Evaluasi (JPG)</h2>
+                <div class="canvas-wrapper">
+                    <canvas id="resultCanvas" width="850" height="1150"></canvas>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
