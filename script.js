@@ -7,12 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const canvas = document.getElementById("resultCanvas");
     const ctx = canvas.getContext("2d");
 
-    // --- VARIABEL TIMER ---
-    let detikPengerjaan = 0;
-    let timerInterval = null;
-
     // --- KUNCI JAWABAN & BOBOT ---
-    // Menggunakan kata kunci penting untuk penilaian otomatis sederhana (skor total: 100)
     const keywordsSoal = [
         ["struktur", "semantik", "elemen", "aksesibilitas", "seo"],            // Soal 1
         ["visual", "usability", "tampilan", "layout", "pengguna", "style"],   // Soal 2
@@ -26,67 +21,54 @@ document.addEventListener("DOMContentLoaded", () => {
         ["mobile-first", "modular", "clean code", "testing", "branch"]        // Soal 10
     ];
 
-    // 1. Inisialisasi Timer Stopwatch
-    function startTimer() {
-        timerInterval = setInterval(() => {
-            detikPengerjaan++;
-        }, 1000);
-    }
-
-    // Format detik ke format HH:MM:SS atau MM:SS
-    function formatWaktu(detikTotal) {
-        const jam = Math.floor(detikTotal / 3600);
-        const menit = Math.floor((detikTotal % 3600) / 60);
-        const detik = detikTotal % 60;
-
-        const pad = (num) => String(num).padStart(2, "0");
-        return jam > 0 ? `${pad(jam)}:${pad(menit)}:${pad(detik)}` : `${pad(menit)}:${pad(detik)}`;
-    }
-
-    // 2. Fungsi Hitung Nilai
-    function hitungNilai() {
-        let totalSkor = 0;
+    // 1. Fungsi Konversi Skor Ke Jumlah Bintang (Max 10) & Grade
+    function kalkulasiGradeDanBintang() {
+        let totalPoin = 0;
 
         for (let i = 1; i <= 10; i++) {
             const jawabanText = document.getElementById(`j${i}`).value.toLowerCase().trim();
             const keywords = keywordsSoal[i - 1];
 
             if (jawabanText.length > 0) {
-                // Hitung berapa kata kunci yang cocok dalam jawaban
                 let matchCount = 0;
                 keywords.forEach(kw => {
                     if (jawabanText.includes(kw)) matchCount++;
                 });
 
-                // Setiap soal memiliki bobot maksimal 10 poin
-                if (matchCount >= 2 || jawabanText.length > 50) {
-                    totalSkor += 10; // Jawaban sangat lengkap
-                } else if (matchCount === 1 || jawabanText.length > 15) {
-                    totalSkor += 6;  // Jawaban cukup
-                } else {
-                    totalSkor += 3;  // Jawaban singkat
+                // Perolehan bintang per soal (0 atau 1 bintang)
+                if (matchCount >= 1 || jawabanText.length > 20) {
+                    totalPoin += 1;
                 }
             }
         }
-        return totalSkor;
+
+        const jumlahBintang = totalPoin; // 0 hingga 10 Bintang
+        let grade = "E";
+
+        if (jumlahBintang >= 9) grade = "A";
+        else if (jumlahBintang >= 7) grade = "B";
+        else if (jumlahBintang >= 5) grade = "C";
+        else if (jumlahBintang >= 3) grade = "D";
+
+        return { jumlahBintang, grade };
     }
 
-    // 3. Render Lembar Hasil ke Canvas HTML5
-    function renderCanvas(nama, skor, waktuStr) {
+    // 2. Render Lembar Hasil ke Canvas HTML5 (Tema Merah & Hitam)
+    function renderCanvas(nama, bintang, grade) {
         // Clear Canvas
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Border Outer
-        ctx.strokeStyle = "#1e293b";
+        // Border Outer (Hitam)
+        ctx.strokeStyle = "#000000";
         ctx.lineWidth = 8;
         ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
 
-        // Header Background
-        ctx.fillStyle = "#2563eb";
+        // Header Background (Merah)
+        ctx.fillStyle = "#dc2626";
         ctx.fillRect(20, 20, canvas.width - 40, 100);
 
-        // Header Title
+        // Header Title (Putih)
         ctx.fillStyle = "#ffffff";
         ctx.font = "bold 24px sans-serif";
         ctx.textAlign = "center";
@@ -94,52 +76,66 @@ document.addEventListener("DOMContentLoaded", () => {
         ctx.font = "14px sans-serif";
         ctx.fillText("Laporan Penilaian & Rekapitulasi Jawaban Siswa", canvas.width / 2, 85);
 
-        // Metadata Siswa
+        // Metadata Siswa (Hitam)
         ctx.textAlign = "left";
-        ctx.fillStyle = "#0f172a";
+        ctx.fillStyle = "#000000";
         ctx.font = "bold 16px sans-serif";
         ctx.fillText(`Nama Siswa : ${nama || "Tanpa Nama"}`, 40, 150);
-        ctx.fillText(`Durasi     : ${waktuStr}`, 40, 175);
-        ctx.fillText(`Nilai Total: ${skor} / 100`, 40, 200);
 
-        // Garis Pembatas
-        ctx.strokeStyle = "#cbd5e1";
+        // Render Rating Bintang (Maksimal 10 Bintang)
+        ctx.fillText(`Rating     : `, 40, 180);
+        let starStr = "";
+        for (let b = 0; b < 10; b++) {
+            starStr += b < bintang ? "★ " : "☆ ";
+        }
+        ctx.fillStyle = "#dc2626"; // Bintang warna Merah
+        ctx.font = "bold 18px sans-serif";
+        ctx.fillText(starStr, 130, 180);
+
+        // Render Grade (Hitam-Merah)
+        ctx.fillStyle = "#000000";
+        ctx.font = "bold 16px sans-serif";
+        ctx.fillText(`Grade      : `, 40, 210);
+        ctx.fillStyle = "#dc2626";
+        ctx.font = "bold 22px sans-serif";
+        ctx.fillText(grade, 130, 212);
+
+        // Garis Pembatas (Merah)
+        ctx.strokeStyle = "#dc2626";
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(40, 215);
-        ctx.lineTo(canvas.width - 40, 215);
+        ctx.moveTo(40, 230);
+        ctx.lineTo(canvas.width - 40, 230);
         ctx.stroke();
 
-        // Render List Jawaban Ringkas
-        let currentY = 245;
-        ctx.font = "12px sans-serif";
+        // Render List Jawaban
+        let currentY = 260;
 
         for (let i = 1; i <= 10; i++) {
             const val = document.getElementById(`j${i}`).value.trim() || "- Tidak diisi -";
             const truncatedVal = val.length > 85 ? val.substring(0, 82) + "..." : val;
 
-            ctx.fillStyle = "#1e293b";
+            // Judul Soal (Hitam)
+            ctx.fillStyle = "#000000";
             ctx.font = "bold 12px sans-serif";
             ctx.fillText(`Soal ${i}:`, 40, currentY);
 
-            ctx.fillStyle = "#475569";
+            // Teks Jawaban (Merah Gelap)
+            ctx.fillStyle = "#7f1d1d";
             ctx.font = "italic 12px sans-serif";
             ctx.fillText(`"${truncatedVal}"`, 100, currentY);
 
             currentY += 75; // Jarak antar soal
         }
 
-        // Footer Stamp
-        ctx.fillStyle = "#94a3b8";
+        // Footer Stamp (Hitam)
+        ctx.fillStyle = "#000000";
         ctx.font = "10px sans-serif";
         ctx.textAlign = "center";
         ctx.fillText("Generated automatically by Web Evaluation System", canvas.width / 2, canvas.height - 30);
     }
 
     // --- EVENT LISTENERS ---
-
-    // Jalankan timer saat halaman dibuka
-    startTimer();
 
     // Event Klik "Hitung Nilai & Preview"
     btnPreview.addEventListener("click", () => {
@@ -150,14 +146,10 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // Hentikan timer saat tombol diproses
-        if (timerInterval) clearInterval(timerInterval);
-
-        const skor = hitungNilai();
-        const waktuTerselesaikan = formatWaktu(detikPengerjaan);
+        const { jumlahBintang, grade } = kalkulasiGradeDanBintang();
 
         // Gambar ke Canvas
-        renderCanvas(nama, skor, waktuTerselesaikan);
+        renderCanvas(nama, jumlahBintang, grade);
     });
 
     // Event Klik "Download (JPG)"
@@ -171,13 +163,11 @@ document.addEventListener("DOMContentLoaded", () => {
         // Konversi Canvas ke Data URL Image (JPG)
         const imageURI = canvas.toDataURL("image/jpeg", 0.9);
         const link = document.createElement("a");
-        
-        // Buat nama file berdasarkan nama siswa
+
         const fileName = `Hasil_Ujian_${nama.replace(/\s+/g, "_")}.jpg`;
         link.download = fileName;
         link.href = imageURI;
-        
-        // Memicu aksi unduh
+
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
