@@ -1,316 +1,185 @@
 document.addEventListener("DOMContentLoaded", () => {
+    // --- ELEMEN DOM ---
+    const quizForm = document.getElementById("quizForm");
     const namaInput = document.getElementById("namaSiswa");
-    const waktuInput = document.getElementById("waktuPengerjaan");
     const btnPreview = document.getElementById("btnPreview");
     const btnDownload = document.getElementById("btnDownload");
     const canvas = document.getElementById("resultCanvas");
     const ctx = canvas.getContext("2d");
 
-    // --- KUNCI JAWABAN (Bisa Diatur) ---
-    const kunciJawaban = [
-        ["javascript", "js", "html", "css"],
-        ["https", "http"],
-        ["mysql", "postgresql", "postgres", "mongodb"],
-        ["commit", "push", "git commit"],
-        ["css", "cascading style sheets"],
-        ["gcp", "google cloud", "google cloud platform"],
-        ["json", "javascript object notation"],
-        ["bootstrap", "tailwind", "tailwind css"],
-        ["node", "nodejs", "node.js"],
-        ["github", "gitlab", "bitbucket"]
+    // --- VARIABEL TIMER ---
+    let detikPengerjaan = 0;
+    let timerInterval = null;
+
+    // --- KUNCI JAWABAN & BOBOT ---
+    // Menggunakan kata kunci penting untuk penilaian otomatis sederhana (skor total: 100)
+    const keywordsSoal = [
+        ["struktur", "semantik", "elemen", "aksesibilitas", "seo"],            // Soal 1
+        ["visual", "usability", "tampilan", "layout", "pengguna", "style"],   // Soal 2
+        ["interaktif", "dinamis", "event", "logika", "dom"],                   // Soal 3
+        ["dom", "element", "eventlistener", "click", "toggle", "innerhtml"],  // Soal 4
+        ["versi", "history", "kolaborasi", "lacak", "branch", "repositori"],   // Soal 5
+        ["lokal", "remote", "simpan", "unggah", "server", "github"],           // Soal 6
+        ["deployment", "otomatis", "build", "ci/cd", "github", "integrasi"],  // Soal 7
+        ["add", "commit", "push", "main", "deploy", "vercel"],                 // Soal 8
+        ["path", "conflict", "env", "cors", "build", "error"],                // Soal 9
+        ["mobile-first", "modular", "clean code", "testing", "branch"]        // Soal 10
     ];
 
-    // Data awal untuk simulasi
-    namaInput.value = "Budi Santoso";
-    waktuInput.value = "4"; // Default 4 menit (Cepat & Bagus)
-    const sampelJawaban = [
-        "JavaScript", "HTTPS", "MySQL", "Commit", "CSS", 
-        "GCP", "JSON", "Tailwind", "NodeJS", "GitHub"
-    ];
-    for (let i = 1; i <= 10; i++) {
-        document.getElementById(`j${i}`).value = sampelJawaban[i - 1];
+    // 1. Inisialisasi Timer Stopwatch
+    function startTimer() {
+        timerInterval = setInterval(() => {
+            detikPengerjaan++;
+        }, 1000);
     }
 
-    // Fungsi menggambar bintang 5 sudut di Canvas
-    function drawStar(cx, cy, spikes, outerRadius, innerRadius, fillStyle) {
-        let rot = Math.PI / 2 * 3;
-        let x = cx;
-        let y = cy;
-        let step = Math.PI / spikes;
+    // Format detik ke format HH:MM:SS atau MM:SS
+    function formatWaktu(detikTotal) {
+        const jam = Math.floor(detikTotal / 3600);
+        const menit = Math.floor((detikTotal % 3600) / 60);
+        const detik = detikTotal % 60;
 
-        ctx.beginPath();
-        ctx.moveTo(cx, cy - outerRadius);
-        for (let i = 0; i < spikes; i++) {
-            x = cx + Math.cos(rot) * outerRadius;
-            y = cy + Math.sin(rot) * outerRadius;
-            ctx.lineTo(x, y);
-            rot += step;
-
-            x = cx + Math.cos(rot) * innerRadius;
-            y = cy + Math.sin(rot) * innerRadius;
-            ctx.lineTo(x, y);
-            rot += step;
-        }
-        ctx.lineTo(cx, cy - outerRadius);
-        ctx.closePath();
-
-        ctx.fillStyle = fillStyle;
-        ctx.fill();
-        ctx.strokeStyle = "#b38600";
-        ctx.lineWidth = 1;
-        ctx.stroke();
+        const pad = (num) => String(num).padStart(2, "0");
+        return jam > 0 ? `${pad(jam)}:${pad(menit)}:${pad(detik)}` : `${pad(menit)}:${pad(detik)}`;
     }
 
-    // Evaluasi Jawaban, Kecepatan, Grade, dan Bintang
-    function hitungEvaluasi() {
-        let totalBenar = 0;
-        const hasilEvaluasi = [];
+    // 2. Fungsi Hitung Nilai
+    function hitungNilai() {
+        let totalSkor = 0;
 
-        // 1. Evaluasi Kualitas Jawaban
         for (let i = 1; i <= 10; i++) {
-            const inputUser = document.getElementById(`j${i}`).value.trim().toLowerCase();
-            const opsiKunci = kunciJawaban[i - 1];
-            const isCorrect = opsiKunci.some(kunci => inputUser.includes(kunci));
+            const jawabanText = document.getElementById(`j${i}`).value.toLowerCase().trim();
+            const keywords = keywordsSoal[i - 1];
 
-            if (isCorrect && inputUser !== "") {
-                totalBenar++;
-                hasilEvaluasi.push({ jawaban: document.getElementById(`j${i}`).value.trim(), status: true });
-            } else {
-                hasilEvaluasi.push({ jawaban: document.getElementById(`j${i}`).value.trim(), status: false });
+            if (jawabanText.length > 0) {
+                // Hitung berapa kata kunci yang cocok dalam jawaban
+                let matchCount = 0;
+                keywords.forEach(kw => {
+                    if (jawabanText.includes(kw)) matchCount++;
+                });
+
+                // Setiap soal memiliki bobot maksimal 10 poin
+                if (matchCount >= 2 || jawabanText.length > 50) {
+                    totalSkor += 10; // Jawaban sangat lengkap
+                } else if (matchCount === 1 || jawabanText.length > 15) {
+                    totalSkor += 6;  // Jawaban cukup
+                } else {
+                    totalSkor += 3;  // Jawaban singkat
+                }
             }
         }
-
-        // 2. Evaluasi Bintang berdasarkan Jawaban Bagus (1 Bintang per Jawaban)
-        let bintangJawaban = totalBenar; // 0 - 10 Bintang
-
-        // 3. Evaluasi Kecepatan Waktu Pengerjaan (Menit)
-        const waktuPengerjaan = parseInt(waktuInput.value) || 10;
-        let kualifikasiWaktu = "Sedang";
-        let bonusBintangWaktu = 0;
-
-        if (waktuPengerjaan <= 3) {
-            kualifikasiWaktu = "Sangat Cepat ⚡⚡";
-            bonusBintangWaktu = 2;
-        } else if (waktuPengerjaan <= 6) {
-            kualifikasiWaktu = "Cepat ⚡";
-            bonusBintangWaktu = 1;
-        } else if (waktuPengerjaan <= 10) {
-            kualifikasiWaktu = "Standar ⏱️";
-            bonusBintangWaktu = 0;
-        } else {
-            kualifikasiWaktu = "Lambat 🐢";
-            bonusBintangWaktu = -1;
-        }
-
-        // Total Bintang Gabungan (Maksimal 10 Bintang)
-        let totalBintang = Math.min(10, Math.max(0, bintangJawaban + bonusBintangWaktu));
-
-        // 4. Penentuan Grade & Predikat berdasarkan Total Bintang
-        let grade = "C";
-        let predikat = "SATISFACTORY";
-        let warnaGrade = "#ff9800";
-
-        if (totalBintang >= 10) {
-            grade = "S+";
-            predikat = "SUMMA CUM LAUDE";
-            warnaGrade = "#00e676";
-        } else if (totalBintang >= 9) {
-            grade = "S";
-            predikat = "EXCELLENT";
-            warnaGrade = "#00e676";
-        } else if (totalBintang >= 7) {
-            grade = "A";
-            predikat = "VERY GOOD";
-            warnaGrade = "#29b6f6";
-        } else if (totalBintang >= 5) {
-            grade = "B";
-            predikat = "GOOD";
-            warnaGrade = "#ffca28";
-        } else if (totalBintang >= 3) {
-            grade = "C";
-            predikat = "SATISFACTORY";
-            warnaGrade = "#ffa726";
-        } else {
-            grade = "D";
-            predikat = "NEEDS IMPROVEMENT";
-            warnaGrade = "#e50914";
-        }
-
-        return {
-            totalBenar,
-            hasilEvaluasi,
-            waktuPengerjaan,
-            kualifikasiWaktu,
-            totalBintang,
-            grade,
-            predikat,
-            warnaGrade
-        };
+        return totalSkor;
     }
 
-    // Fungsi Menggambar Ke Canvas
-    function renderCanvas() {
-        const evalData = hitungEvaluasi();
-
-        // 1. Background Canvas Hitam Pekat
-        ctx.fillStyle = "#0d0d0d";
+    // 3. Render Lembar Hasil ke Canvas HTML5
+    function renderCanvas(nama, skor, waktuStr) {
+        // Clear Canvas
+        ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // 2. Border Outer Merah
-        ctx.strokeStyle = "#e50914";
-        ctx.lineWidth = 12;
-        ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+        // Border Outer
+        ctx.strokeStyle = "#1e293b";
+        ctx.lineWidth = 8;
+        ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
 
-        // Frame Inner Tipis
-        ctx.strokeStyle = "#333333";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(32, 32, canvas.width - 64, canvas.height - 64);
+        // Header Background
+        ctx.fillStyle = "#2563eb";
+        ctx.fillRect(20, 20, canvas.width - 40, 100);
 
-        // 3. Header Text
-        ctx.fillStyle = "#e50914";
-        ctx.font = "bold 30px 'Segoe UI', sans-serif";
+        // Header Title
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 24px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("LEMBAR EVALUASI & GRADUASI SISWA", canvas.width / 2, 75);
+        ctx.fillText("HASIL EVALUASI PEMROGRAMAN WEB", canvas.width / 2, 60);
+        ctx.font = "14px sans-serif";
+        ctx.fillText("Laporan Penilaian & Rekapitulasi Jawaban Siswa", canvas.width / 2, 85);
 
-        // Garis Pembatas Header
-        ctx.strokeStyle = "#e50914";
-        ctx.lineWidth = 3;
+        // Metadata Siswa
+        ctx.textAlign = "left";
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "bold 16px sans-serif";
+        ctx.fillText(`Nama Siswa : ${nama || "Tanpa Nama"}`, 40, 150);
+        ctx.fillText(`Durasi     : ${waktuStr}`, 40, 175);
+        ctx.fillText(`Nilai Total: ${skor} / 100`, 40, 200);
+
+        // Garis Pembatas
+        ctx.strokeStyle = "#cbd5e1";
+        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(60, 95);
-        ctx.lineTo(canvas.width - 60, 95);
+        ctx.moveTo(40, 215);
+        ctx.lineTo(canvas.width - 40, 215);
         ctx.stroke();
 
-        // 4. Info Nama, Waktu & Tanggal
-        ctx.textAlign = "left";
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 20px 'Segoe UI', sans-serif";
-        const namaSiswa = namaInput.value.trim() || "NAMA TIDAK DIISI";
-        ctx.fillText(`NAMA SISWA : ${namaSiswa.toUpperCase()}`, 60, 135);
+        // Render List Jawaban Ringkas
+        let currentY = 245;
+        ctx.font = "12px sans-serif";
 
-        ctx.fillStyle = "#a0a0a0";
-        ctx.font = "15px 'Segoe UI', sans-serif";
-        ctx.fillText(`Waktu Pengerjaan : ${evalData.waktuPengerjaan} Menit (${evalData.kualifikasiWaktu})`, 60, 162);
+        for (let i = 1; i <= 10; i++) {
+            const val = document.getElementById(`j${i}`).value.trim() || "- Tidak diisi -";
+            const truncatedVal = val.length > 85 ? val.substring(0, 82) + "..." : val;
 
-        const today = new Date().toLocaleDateString('id-ID', {
-            day: 'numeric', month: 'long', year: 'numeric'
-        });
-        ctx.font = "italic 14px 'Segoe UI', sans-serif";
-        ctx.fillText(`Tanggal Evaluasi : ${today}`, 60, 185);
+            ctx.fillStyle = "#1e293b";
+            ctx.font = "bold 12px sans-serif";
+            ctx.fillText(`Soal ${i}:`, 40, currentY);
 
-        // 5. BADGE GRADE AKHIR (Pojok Kanan Atas)
-        ctx.fillStyle = "#1e1e1e";
-        ctx.fillRect(canvas.width - 230, 110, 170, 85);
-        ctx.strokeStyle = evalData.warnaGrade;
-        ctx.lineWidth = 3;
-        ctx.strokeRect(canvas.width - 230, 110, 170, 85);
+            ctx.fillStyle = "#475569";
+            ctx.font = "italic 12px sans-serif";
+            ctx.fillText(`"${truncatedVal}"`, 100, currentY);
 
-        ctx.textAlign = "center";
-        ctx.fillStyle = "#a0a0a0";
-        ctx.font = "bold 11px 'Segoe UI', sans-serif";
-        ctx.fillText("GRADE EVALUASI", canvas.width - 145, 128);
-
-        ctx.fillStyle = evalData.warnaGrade;
-        ctx.font = "bold 36px 'Segoe UI', sans-serif";
-        ctx.fillText(evalData.grade, canvas.width - 145, 163);
-
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 10px 'Segoe UI', sans-serif";
-        ctx.fillText(evalData.predikat, canvas.width - 145, 182);
-
-        // 6. RENDER 10 BINTANG MAKSIMAL
-        ctx.textAlign = "left";
-        ctx.fillStyle = "#ffc107";
-        ctx.font = "bold 15px 'Segoe UI', sans-serif";
-        ctx.fillText("PENCAPAIAN BINTANG (MAX 10 ⭐):", 60, 225);
-
-        const startXStar = 350;
-        const startYStar = 220;
-        const gapStar = 38;
-
-        for (let s = 1; s <= 10; s++) {
-            const posX = startXStar + (s - 1) * gapStar;
-            const fill = s <= evalData.totalBintang ? "#ffc107" : "#333333";
-            drawStar(posX, startYStar, 5, 14, 7, fill);
+            currentY += 75; // Jarak antar soal
         }
 
-        // 7. Render 10 Jawaban + Status Koreksi
-        let startY = 280;
-        const lineHeight = 65;
-
-        for (let i = 0; i < 10; i++) {
-            const item = evalData.hasilEvaluasi[i];
-            const textJawaban = item.jawaban || "(Kosong)";
-
-            // Box Background Jawaban
-            ctx.fillStyle = "#1a1a1a";
-            ctx.fillRect(60, startY - 22, canvas.width - 120, 48);
-            
-            ctx.strokeStyle = item.status ? "#00e676" : "#3a1a1a";
-            ctx.lineWidth = 1;
-            ctx.strokeRect(60, startY - 22, canvas.width - 120, 48);
-
-            // Nomor Jawaban
-            ctx.textAlign = "left";
-            ctx.fillStyle = "#e50914";
-            ctx.font = "bold 18px 'Segoe UI', sans-serif";
-            ctx.fillText(`${i + 1}.`, 75, startY + 8);
-
-            // Teks Jawaban (Putih)
-            ctx.fillStyle = "#f5f5f5";
-            ctx.font = "17px 'Segoe UI', sans-serif";
-            let truncatedText = textJawaban;
-            if (truncatedText.length > 42) {
-                truncatedText = truncatedText.substring(0, 39) + "...";
-            }
-            ctx.fillText(truncatedText, 110, startY + 8);
-
-            // Status Kualitas Jawaban di Sisi Kanan Box
-            ctx.textAlign = "right";
-            if (item.status) {
-                ctx.fillStyle = "#00e676";
-                ctx.font = "bold 15px 'Segoe UI', sans-serif";
-                ctx.fillText("✓ BAGUS (1⭐)", canvas.width - 80, startY + 8);
-            } else {
-                ctx.fillStyle = "#e50914";
-                ctx.font = "bold 15px 'Segoe UI', sans-serif";
-                ctx.fillText("✗ KURANG (0⭐)", canvas.width - 80, startY + 8);
-            }
-
-            startY += lineHeight;
-        }
-
-        // 8. Ringkasan & Footer
+        // Footer Stamp
+        ctx.fillStyle = "#94a3b8";
+        ctx.font = "10px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillStyle = "#a0a0a0";
-        ctx.font = "bold 16px 'Segoe UI', sans-serif";
-        ctx.fillText(`Total Perolehan: ${evalData.totalBintang} / 10 Bintang (${evalData.totalBenar} Jawaban Bagus + Bonus Kecepatan)`, canvas.width / 2, canvas.height - 70);
-
-        ctx.fillStyle = "#555555";
-        ctx.font = "13px 'Segoe UI', sans-serif";
-        ctx.fillText("Generated Automatically with Grade & Star Evaluation System", canvas.width / 2, canvas.height - 40);
+        ctx.fillText("Generated automatically by Web Evaluation System", canvas.width / 2, canvas.height - 30);
     }
 
-    // Fungsi Download JPG
-    function downloadJPG() {
-        renderCanvas();
-        const imageURI = canvas.toDataURL("image/jpeg", 0.95);
+    // --- EVENT LISTENERS ---
 
-        const rawNama = namaInput.value.trim() || "Siswa";
-        const cleanNama = rawNama.replace(/[^a-zA-Z0-9]/g, "_");
+    // Jalankan timer saat halaman dibuka
+    startTimer();
 
+    // Event Klik "Hitung Nilai & Preview"
+    btnPreview.addEventListener("click", () => {
+        const nama = namaInput.value.trim();
+        if (!nama) {
+            alert("Harap isi Nama Peserta Didik terlebih dahulu!");
+            namaInput.focus();
+            return;
+        }
+
+        // Hentikan timer saat tombol diproses
+        if (timerInterval) clearInterval(timerInterval);
+
+        const skor = hitungNilai();
+        const waktuTerselesaikan = formatWaktu(detikPengerjaan);
+
+        // Gambar ke Canvas
+        renderCanvas(nama, skor, waktuTerselesaikan);
+    });
+
+    // Event Klik "Download (JPG)"
+    btnDownload.addEventListener("click", () => {
+        const nama = namaInput.value.trim();
+        if (!nama) {
+            alert("Harap isi nama dan klik 'Hitung Nilai & Preview' terlebih dahulu.");
+            return;
+        }
+
+        // Konversi Canvas ke Data URL Image (JPG)
+        const imageURI = canvas.toDataURL("image/jpeg", 0.9);
         const link = document.createElement("a");
-        link.download = `Graduasi_Grade_${cleanNama}.jpg`;
+        
+        // Buat nama file berdasarkan nama siswa
+        const fileName = `Hasil_Ujian_${nama.replace(/\s+/g, "_")}.jpg`;
+        link.download = fileName;
         link.href = imageURI;
         
+        // Memicu aksi unduh
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-    }
-
-    // Event Listener
-    btnPreview.addEventListener("click", renderCanvas);
-    btnDownload.addEventListener("click", downloadJPG);
-
-    // Initial Render
-    renderCanvas();
+    });
 });
